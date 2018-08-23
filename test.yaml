@@ -1,0 +1,117 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-casc
+data:
+  jenkins.yaml: |
+    plugins:
+      sites:
+      - id: "default"
+        url: "https://updates.jenkins.io/update-center.json"
+    jenkins:
+      location:
+        url: ${SECRET_JENKINS_URL}
+        adminAddress: "${SECRET_JENKINS_ADMIN_ADDRESS}"
+        agentProtocols:
+        - "JNLP4-connect"
+        - "Ping"
+        authorizationStrategy:
+          loggedInUsersCanDoAnything:
+            allowAnonymousRead: false
+        crumbIssuer:
+          standard:
+            excludeClientIPFromCrumb: false
+        disableRememberMe: false
+        mode: NORMAL
+        numExecutors: 2
+        primaryView:
+          all:
+            name: "all"
+        quietPeriod: 5
+        scmCheckoutRetryCount: 0
+        securityRealm:
+          local:
+            allowsSignup: false
+            enableCaptcha: false
+            users:
+            - id: "nathan"
+        slaveAgentPort: 50000
+        views:
+        - all:
+            name: "all"
+    tool:
+      git:
+        installations:
+        - home: "git"
+          name: "Default"
+      jdk:
+        defaultProperties:
+        - installSource:
+            installers:
+            - jdkInstaller:
+                acceptLicense: false
+
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: jenkins
+spec:
+  selector:
+    matchLabels:
+      app: jenkins # has to match .spec.template.metadata.labels
+  serviceName: "jenkins"
+  template:
+    metadata:
+      labels:
+        app: jenkins # has to match .spec.selector.matchLabels
+    spec:
+      containers:
+        - name: jenkins
+          image: naffandroo/jenkins-withdocker:latest
+          env:
+            # Read the configuration-as-code from the ConfigMap
+            - name: CASC_JENKINS_CONFIG
+              value: /var/jenkins_config/jenkins.yaml
+            # With the help of SECRETS environment variable
+            # we points Jenkins configuration-as-code plugin the location of the secrets
+            - name: SECRETS
+              value: /secrets/jenkins
+          # Mount the configuration-as-code ConfigMap
+          volumeMounts:
+            - name: jenkins-configuration-as-code
+              mountPath: /var/jenkins_config
+            - name: jenkins-secrets
+              mountPath: /secrets/jenkins
+              readOnly: true
+      volumes:
+        # The configuration-as-code ConfigMap
+        - name: jenkins-configuration-as-code
+          configMap:
+            name: jenkins-casc
+        - name: jenkins-secrets
+          secret:
+            secretName: jenkins-secrets
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    field.cattle.io/creatorId: u-ttm9d
+    field.cattle.io/ingressState: '{"amVua2lucy1pbmdyZXNzL2plbmtpbnMtdGVzdC9qZW5raW5zLm5hdGhhbmRyZXcub3JnLy84MDgw":"statefulset:jenkins-test:jenkins"}'
+    kubernetes.io/tls-acme: "true"
+  creationTimestamp: 2018-08-23T20:07:06Z
+  generation: 1
+  name: jenkins-ingress
+  namespace: jenkins-test
+spec:
+  rules:
+  - host: jenkins.nathandrew.org
+    http:
+      paths:
+      - backend:
+          serviceName: ingress-jenkins-test
+          servicePort: 8080
+status:
+  loadBalancer: {}
