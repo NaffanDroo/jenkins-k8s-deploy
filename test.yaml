@@ -36,10 +36,12 @@ data:
             enableCaptcha: false
             users:
             - id: "nathan"
+            - password: "${SECRET_JENKINS_PASSWORD}"
         slaveAgentPort: 50000
         views:
         - all:
             name: "all"
+
     tool:
       git:
         installations:
@@ -99,20 +101,18 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   annotations:
-    field.cattle.io/creatorId: u-ttm9d
-    field.cattle.io/ingressState: '{"amVua2lucy1pbmdyZXNzL2plbmtpbnMtdGVzdC9qZW5raW5zLm5hdGhhbmRyZXcub3JnLy84MDgw":"statefulset:jenkins-test:jenkins"}'
+    field.cattle.io/ingressState: '{"amVua2lucy1pbmdyZXNzL2plbmtpbnMvamVua2lucy5uYXRoYW5kcmV3Lm9yZy8vODA4MA==":"statefulset:jenkins:jenkins"}'
     kubernetes.io/tls-acme: "true"
-  creationTimestamp: 2018-08-23T20:07:06Z
   generation: 1
   name: jenkins-ingress
-  namespace: jenkins-test
+  namespace: jenkins
 spec:
   rules:
   - host: jenkins.nathandrew.org
     http:
       paths:
       - backend:
-          serviceName: ingress-jenkins-test
+          serviceName: ingress-jenkins
           servicePort: 8080
 status:
   loadBalancer: {}
