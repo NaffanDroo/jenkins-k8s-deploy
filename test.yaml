@@ -88,6 +88,8 @@ spec:
             - name: jenkins-secrets
               mountPath: /secrets/jenkins
               readOnly: true
+            - mountPath: /var/jenkins_home
+              name: jenkins-vol
       volumes:
         # The configuration-as-code ConfigMap
         - name: jenkins-configuration-as-code
@@ -96,6 +98,16 @@ spec:
         - name: jenkins-secrets
           secret:
             secretName: jenkins-secrets
+  volumeClaimTemplates:
+  - metadata:
+      name: jenkins-vol
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 5Gi
+      storageClassName: longhorn
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
