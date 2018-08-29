@@ -72,7 +72,7 @@ spec:
       containers:
         - name: jenkins
           image: naffandroo/jenkins-withdocker:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           env:
             # Read the configuration-as-code from the ConfigMap
             - name: CASC_JENKINS_CONFIG
