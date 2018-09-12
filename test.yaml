@@ -1,3 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-service
+  labels:
+    app: jenkins
+spec:
+  ports:
+  - port: 8080
+    name: http
+  selector:
+    app: jenkins
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -73,6 +86,8 @@ spec:
         - name: jenkins
           image: naffandroo/jenkins-withdocker:latest
           imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
           env:
             # Read the configuration-as-code from the ConfigMap
             - name: CASC_JENKINS_CONFIG
@@ -101,19 +116,20 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: jenkins-vol
+      annotations:
+        volume.beta.kubernetes.io/storage-class: fast
     spec:
       accessModes:
         - ReadWriteOnce
       resources:
         requests:
           storage: 5Gi
-      storageClassName: longhorn
+      storageClassName: fast
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   annotations:
-    field.cattle.io/ingressState: '{"amVua2lucy1pbmdyZXNzL2plbmtpbnMvamVua2lucy5uYXRoYW5kcmV3Lm9yZy8vODA4MA==":"statefulset:jenkins:jenkins"}'
     kubernetes.io/tls-acme: "true"
   generation: 1
   name: jenkins-ingress
@@ -124,7 +140,7 @@ spec:
     http:
       paths:
       - backend:
-          serviceName: ingress-jenkins
-          servicePort: 8080
+          serviceName: jenkins-service
+          servicePort: http
 status:
   loadBalancer: {}
