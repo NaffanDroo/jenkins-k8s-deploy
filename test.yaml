@@ -1,3 +1,4 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -22,6 +23,8 @@ data:
       sites:
       - id: "default"
         url: "https://updates.jenkins.io/update-center.json"
+      required:
+        simple-theme-plugin: 0.5.1
     jenkins:
       location:
         url: ${SECRET_JENKINS_URL}
@@ -84,7 +87,7 @@ spec:
     spec:
       containers:
         - name: jenkins
-          image: naffandroo/jenkins-withdocker:latest
+          image: naffandroo/jenkins-withdocker:2.138.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -136,7 +139,7 @@ metadata:
   namespace: jenkins
 spec:
   rules:
-  - host: jenkins.nathandrew.org
+  - host: jenkins.k8s.nathandrew.org
     http:
       paths:
       - backend:
